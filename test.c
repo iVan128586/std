@@ -1,6 +1,8 @@
 
+#include <stdlib.h>
 
-
+#define __STD_NO_OS_DEPEND__
+#define PANIC {exit(1);}
 #include "std"
 
 
@@ -9,8 +11,8 @@
 
 
 
+
 int main(){
-    init_console();
 
 
 
