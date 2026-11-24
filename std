@@ -38,11 +38,11 @@
 typedef uint8_t byte;
 
 typedef int16_t int16;
-typedef int32_t int_;
+typedef int32_t int32;
 typedef int64_t int64;
 
 typedef uint16_t uint16;
-typedef uint32_t uint;
+typedef uint32_t uint32;
 typedef uint64_t uint64;
 
 
@@ -71,10 +71,10 @@ typedef uint64_t uint64;
 #endif
 #define byte byte
 #define int16 int16
-#define int int_
+#define int32 int32
 #define int64 int64
 #define uint16 uint16
-#define uint uint
+#define uint32 uint32
 #define uint64 uint64
 
 
@@ -572,94 +572,97 @@ char* get_arg(int* argc, char*** argv){
 
 
 
-struct tqdm_data tqdm_data;
 
 #ifndef __STD_NO_OS_DEPEND__
-    int64 tqdm_start(int64 start){
-        tqdm_data.start = start;
-        tqdm_data.current = start;
-        tqdm_data.start_time = set_timer();
-        tqdm_data.last_render = set_timer() - 100;
-        tqdm_render();
-        return start;
-    }
+    #ifndef __STD_NO_TQDM__
+        struct tqdm_data tqdm_data;
 
-    int64 tqdm_total(int64 total){
-        tqdm_data.total = total;
-        tqdm_render();
-        if(!(tqdm_data.current < tqdm_data.total)){
-            tqdm_stop();
+        int64 tqdm_start(int64 start){
+            tqdm_data.start = start;
+            tqdm_data.current = start;
+            tqdm_data.start_time = set_timer();
+            tqdm_data.last_render = set_timer() - 100;
+            tqdm_render();
+            return start;
         }
-        return total;
-    }
 
-    int64 tqdm_current(int64 current){
-        tqdm_data.current = current;
-        tqdm_render();
-        return current;
-    }
-
-    void tqdm_print_stats(int64 done, int64 was_to_do, double elapsed_, int filled, double speed, double esti_){
-        printf("\r[");
-        for(int i = 0; i < filled; i++){
-            printf("#");
-        }
-        for(int i = 0; i < TQDM_BAR_WIDTH - filled; i++){
-            printf("-");
-        }
-        printf("] ");
-        
-        printf("%lld/%lld [", done, was_to_do);
-        
-        struct tm* elapsed = gmtime(&(time_t){elapsed_});
-        if(elapsed->tm_hour){
-            printf("%02d:", elapsed->tm_hour);
-        }
-        printf("%02d:%02d", elapsed->tm_min, elapsed->tm_sec);
-        
-        printf("<");
-        
-        if(isfinite(esti_) && !isnan(esti_)){
-            struct tm* esti = gmtime(&(time_t){esti_});
-            if(esti->tm_hour){
-                printf("%02d:", esti->tm_hour);
+        int64 tqdm_total(int64 total){
+            tqdm_data.total = total;
+            tqdm_render();
+            if(!(tqdm_data.current < tqdm_data.total)){
+                tqdm_stop();
             }
-            printf("%02d:%02d", esti->tm_min, esti->tm_sec);
-        }
-        else{
-            printf("??:??");
+            return total;
         }
 
-        printf(", %.1fit/s]", speed);
-    }
-
-    void tqdm_render(){
-        if(get_elapsed(tqdm_data.last_render) < 0.03){
-            return;
+        int64 tqdm_current(int64 current){
+            tqdm_data.current = current;
+            tqdm_render();
+            return current;
         }
-        tqdm_data.last_render = set_timer();
-        
-        double elapsed = get_elapsed(tqdm_data.start_time);
-        int64 done = tqdm_data.current - tqdm_data.start;
-        int64 was_to_do = tqdm_data.total - tqdm_data.start;
-        
-        double progress = was_to_do > 0 ? (double)done / was_to_do : 0;
-        int filled = (int)(progress * TQDM_BAR_WIDTH);
-        
-        double speed = done / elapsed;
-        
-        double esti = (was_to_do - done) / speed;
-        
-        tqdm_print_stats(done, was_to_do, elapsed, filled, speed, esti);
-    }
 
-    void tqdm_stop(){
-        printf("\r");
-        for(int i = 0; i < TQDM_BAR_WIDTH + 60; i++){
-            printf(" ");
+        void tqdm_print_stats(int64 done, int64 was_to_do, double elapsed_, int filled, double speed, double esti_){
+            printf("\r[");
+            for(int i = 0; i < filled; i++){
+                printf("#");
+            }
+            for(int i = 0; i < TQDM_BAR_WIDTH - filled; i++){
+                printf("-");
+            }
+            printf("] ");
+            
+            printf("%lld/%lld [", done, was_to_do);
+            
+            struct tm* elapsed = gmtime(&(time_t){elapsed_});
+            if(elapsed->tm_hour){
+                printf("%02d:", elapsed->tm_hour);
+            }
+            printf("%02d:%02d", elapsed->tm_min, elapsed->tm_sec);
+            
+            printf("<");
+            
+            if(isfinite(esti_) && !isnan(esti_)){
+                struct tm* esti = gmtime(&(time_t){esti_});
+                if(esti->tm_hour){
+                    printf("%02d:", esti->tm_hour);
+                }
+                printf("%02d:%02d", esti->tm_min, esti->tm_sec);
+            }
+            else{
+                printf("??:??");
+            }
+
+            printf(", %.1fit/s]", speed);
         }
-        printf("\r");
-    }
+
+        void tqdm_render(){
+            if(get_elapsed(tqdm_data.last_render) < 0.03){
+                return;
+            }
+            tqdm_data.last_render = set_timer();
+            
+            double elapsed = get_elapsed(tqdm_data.start_time);
+            int64 done = tqdm_data.current - tqdm_data.start;
+            int64 was_to_do = tqdm_data.total - tqdm_data.start;
+            
+            double progress = was_to_do > 0 ? (double)done / was_to_do : 0;
+            int filled = (int)(progress * TQDM_BAR_WIDTH);
+            
+            double speed = done / elapsed;
+            
+            double esti = (was_to_do - done) / speed;
+            
+            tqdm_print_stats(done, was_to_do, elapsed, filled, speed, esti);
+        }
+
+        void tqdm_stop(){
+            printf("\r");
+            for(int i = 0; i < TQDM_BAR_WIDTH + 60; i++){
+                printf(" ");
+            }
+            printf("\r");
+        }
+    #endif // __STD_NO_TQDM__
 #endif // __STD_NO_OS_DEPEND__
 
 
